@@ -1,5 +1,4 @@
 name: Daily TM52 update
-
 on:
   schedule:
     # Runs at 06:00 UTC every day. Edit the numbers to change the time.
