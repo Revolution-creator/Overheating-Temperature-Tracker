@@ -1,5 +1,4 @@
 name: Daily TM52 update
-
 on:
   schedule:
     - cron: "0 6 * * *"
