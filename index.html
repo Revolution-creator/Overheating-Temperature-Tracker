@@ -15,6 +15,7 @@
     --text: #E5EDF5;
     --muted: #7C8FA6;
     --actual: #5FB4E5;
+    --trm: #8B7FD4;
     --threshold: #F2A65A;
     --danger: #E5533D;
     --ok: #4ADE80;
@@ -194,10 +195,11 @@
   </div>
 
   <div class="chart-panel">
-    <h2>Trend — running mean vs. upper threshold</h2>
-    <canvas id="trendChart" height="110"></canvas>
+    <h2>Last 30 days — hourly external temp vs. running mean &amp; threshold</h2>
+    <canvas id="combinedChart" height="110"></canvas>
     <div class="legend">
-      <span><span class="swatch" style="background:var(--actual)"></span>Daily mean external temp</span>
+      <span><span class="swatch" style="background:var(--actual)"></span>Hourly external temp</span>
+      <span><span class="swatch" style="background:var(--trm)"></span>T<sub>rm</sub> (running mean)</span>
       <span><span class="swatch" style="background:var(--threshold)"></span>T<sub>max</sub> threshold</span>
     </div>
   </div>
@@ -210,10 +212,10 @@
 <script>
   // Add an entry here for every location you add to config.py / data/*.json
   const LOCATIONS = [
-    { key: "heathrow", name: "London Heathrow", file: "data/heathrow.json" },
+    { key: "heathrow", name: "London Heathrow", file: "data/heathrow.json", hourlyFile: "data/heathrow_hourly.json" },
   ];
 
-  let chart;
+  let combinedChart;
 
   async function loadLocation(loc) {
     const res = await fetch(loc.file + "?t=" + Date.now()); // cache-bust
@@ -225,11 +227,21 @@
       );
       return;
     }
-    const history = await res.json();
-    render(history);
+    const dailyHistory = await res.json();
+    renderCards(dailyHistory);
+
+    try {
+      const hourlyRes = await fetch(loc.hourlyFile + "?t=" + Date.now());
+      if (hourlyRes.ok) {
+        const hourly = await hourlyRes.json();
+        renderCombined(dailyHistory, hourly);
+      }
+    } catch (e) {
+      // Hourly/merged chart is a bonus display - fail quietly if unavailable.
+    }
   }
 
-  function render(history) {
+  function renderCards(history) {
     const latest = history[history.length - 1];
 
     document.getElementById("tmaxValue").innerHTML = `${latest.tmax_c.toFixed(1)}<span class="unit">°C</span>`;
@@ -245,44 +257,83 @@
       pill.textContent = "Within threshold";
       pill.classList.remove("exceeded");
     }
+  }
 
-    const labels = history.map(r => r.date);
-    const actual = history.map(r => r.mean_temp_c);
-    const tmax = history.map(r => r.tmax_c);
+  function renderCombined(dailyHistory, hourly) {
+    // Look up each hour's date against the daily Trm/Tmax record for that date,
+    // so all three series share the same hourly x-axis.
+    const dailyByDate = {};
+    dailyHistory.forEach(r => { dailyByDate[r.date] = r; });
 
-    if (chart) chart.destroy();
-    const ctx = document.getElementById("trendChart").getContext("2d");
-    chart = new Chart(ctx, {
+    const labels = hourly.map(r => {
+      const d = new Date(r.time);
+      return d.toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    });
+    const actualTemps = hourly.map(r => r.temp_c);
+    const trmValues = hourly.map(r => {
+      const dateKey = r.time.slice(0, 10);
+      return dailyByDate[dateKey] ? dailyByDate[dateKey].trm_c : null;
+    });
+    const tmaxValues = hourly.map(r => {
+      const dateKey = r.time.slice(0, 10);
+      return dailyByDate[dateKey] ? dailyByDate[dateKey].tmax_c : null;
+    });
+
+    if (combinedChart) combinedChart.destroy();
+    const ctx = document.getElementById("combinedChart").getContext("2d");
+    combinedChart = new Chart(ctx, {
       type: "line",
       data: {
         labels,
         datasets: [
           {
-            label: "Mean ext. temp",
-            data: actual,
+            label: "Hourly external temp",
+            data: actualTemps,
             borderColor: "#5FB4E5",
-            backgroundColor: "transparent",
+            backgroundColor: "rgba(95,180,229,0.08)",
+            fill: true,
             tension: 0.25,
             pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 1.5,
+          },
+          {
+            label: "Trm (running mean)",
+            data: trmValues,
+            borderColor: "#8B7FD4",
+            backgroundColor: "transparent",
+            stepped: "before",
+            pointRadius: 0,
             borderWidth: 2,
+            spanGaps: true,
           },
           {
             label: "Tmax threshold",
-            data: tmax,
+            data: tmaxValues,
             borderColor: "#F2A65A",
             backgroundColor: "transparent",
-            tension: 0.25,
+            stepped: "before",
             pointRadius: 0,
             borderWidth: 2,
             borderDash: [4, 3],
+            spanGaps: true,
           },
         ],
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: (items) => items[0].label,
+              label: (ctx) => ctx.parsed.y === null ? null : `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}°C`,
+            },
+          },
+        },
         scales: {
-          x: { ticks: { color: "#7C8FA6", maxTicksLimit: 8 }, grid: { color: "#1F2C3E" } },
+          x: { ticks: { color: "#7C8FA6", maxTicksLimit: 10, autoSkip: true }, grid: { color: "#1F2C3E" } },
           y: { ticks: { color: "#7C8FA6" }, grid: { color: "#1F2C3E" } },
         },
       },

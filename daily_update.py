@@ -15,8 +15,8 @@ import json
 import os
 from datetime import date, timedelta
 
-from config import LOCATIONS, ALPHA, DELTA_T, DATA_DIR, TIMEZONE
-from weather import get_recent_daily_mean_temps
+from config import LOCATIONS, ALPHA, DELTA_T, DATA_DIR, TIMEZONE, HOURLY_PAST_DAYS
+from weather import get_recent_daily_mean_temps, get_recent_hourly_temps
 from tm52_calc import next_running_mean_temp, upper_threshold_temp
 
 
@@ -38,11 +38,9 @@ def update_location(location_key: str, location: dict):
         print(f"[skip] {location_key}: already up to date (last record {last_date}).")
         return
 
-    # Trm for new_date only needs the previous record - no fetch required for this part.
     new_trm = next_running_mean_temp(last_record["trm_c"], last_record["mean_temp_c"], ALPHA)
     new_tmax = upper_threshold_temp(new_trm, DELTA_T)
 
-    # Fetch new_date's own actual mean temperature, purely for display/comparison.
     temps_by_date = get_recent_daily_mean_temps(location["lat"], location["lon"], TIMEZONE)
     new_date_str = new_date.isoformat()
 
@@ -64,6 +62,29 @@ def update_location(location_key: str, location: dict):
     print(f"[ok] {location_key}: added {record}")
 
 
+def update_hourly(location_key: str, location: dict):
+    """
+    Overwrites the hourly file each run with the latest rolling window -
+    this is a display-only dataset, not part of the TM52 calculation,
+    so there's no need to keep it forever or append to it.
+    """
+    file_path = os.path.join(DATA_DIR, f"{location_key}_hourly.json")
+    hourly_pairs = get_recent_hourly_temps(location["lat"], location["lon"], TIMEZONE, HOURLY_PAST_DAYS)
+
+    records = [
+        {"time": timestamp, "temp_c": round(temp, 2)}
+        for timestamp, temp in hourly_pairs
+        if temp is not None
+    ]
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(file_path, "w") as f:
+        json.dump(records, f, indent=2)
+
+    print(f"[ok] {location_key}: hourly data refreshed ({len(records)} points)")
+
+
 if __name__ == "__main__":
     for key, loc in LOCATIONS.items():
         update_location(key, loc)
+        update_hourly(key, loc)

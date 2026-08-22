@@ -29,3 +29,4 @@ LOCATIONS = {
 
 DATA_DIR = "data"
 TIMEZONE = "Europe/London"
+HOURLY_PAST_DAYS = 30   # how many days of hourly data to keep on the merged chart
