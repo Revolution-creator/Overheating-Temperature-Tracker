@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TM52 Overheating Threshold Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg: #0B1220;
+    --panel: #121B2B;
+    --border: #1F2C3E;
+    --text: #E5EDF5;
+    --muted: #7C8FA6;
+    --actual: #5FB4E5;
+    --threshold: #F2A65A;
+    --danger: #E5533D;
+    --ok: #4ADE80;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    padding:28px clamp(16px,4vw,48px) 8px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    border-bottom:1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 4px;
+  }
+  h1{
+    font-size:20px;
+    margin:0 0 20px;
+    font-weight:600;
+  }
+  .locations{
+    display:flex;
+    gap:6px;
+  }
+  .location-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    padding:7px 14px;
+    border-radius:5px;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .location-tab.active{
+    color:var(--text);
+    border-color:var(--actual);
+  }
+  main{
+    max-width:1040px;
+    margin:0 auto;
+    padding:28px clamp(16px,4vw,48px) 60px;
+  }
+  .readout-row{
+    display:grid;
+    grid-template-columns:1.2fr 1fr 1fr;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  @media (max-width:640px){ .readout-row{grid-template-columns:1fr;} }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px 20px;
+  }
+  .card .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .card .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:40px;
+    font-weight:600;
+    line-height:1;
+  }
+  .card .unit{
+    font-size:18px;
+    color:var(--muted);
+    margin-left:4px;
+  }
+  .card.hero .value{ color:var(--threshold); }
+  .card .sub{
+    margin-top:8px;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .status-pill{
+    display:inline-block;
+    margin-top:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:99px;
+    background:rgba(74,222,128,0.12);
+    color:var(--ok);
+  }
+  .status-pill.exceeded{
+    background:rgba(229,83,61,0.14);
+    color:var(--danger);
+  }
+  .chart-panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:20px;
+  }
+  .chart-panel h2{
+    font-size:13px;
+    font-family:'IBM Plex Mono', monospace;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--muted);
+    margin:0 0 16px;
+    font-weight:500;
+  }
+  .legend{
+    display:flex;
+    gap:18px;
+    margin-top:14px;
+    font-size:12px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .legend span{ display:flex; align-items:center; gap:6px; }
+  .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+  footer{
+    max-width:1040px;
+    margin:0 auto;
+    padding:0 clamp(16px,4vw,48px) 40px;
+    color:var(--muted);
+    font-size:12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .empty{
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="eyebrow">CIBSE TM52 · Adaptive comfort</p>
+    <h1>Overheating threshold tracker</h1>
+  </div>
+  <div class="locations" id="locationTabs"></div>
+</header>
+
+<main>
+  <div class="readout-row">
+    <div class="card hero">
+      <div class="label">Today's upper threshold (T<sub>max</sub>)</div>
+      <div class="value" id="tmaxValue">–<span class="unit">°C</span></div>
+      <div class="sub" id="tmaxSub">Category II (ΔT = 3°C)</div>
+    </div>
+    <div class="card">
+      <div class="label">Running mean temp (T<sub>rm</sub>)</div>
+      <div class="value" id="trmValue">–<span class="unit">°C</span></div>
+      <div class="sub" id="trmDate">–</div>
+    </div>
+    <div class="card">
+      <div class="label">Yesterday's mean ext. temp</div>
+      <div class="value" id="actualValue">–<span class="unit">°C</span></div>
+      <div class="status-pill" id="statusPill">–</div>
+    </div>
+  </div>
+
+  <div class="chart-panel">
+    <h2>Trend — running mean vs. upper threshold</h2>
+    <canvas id="trendChart" height="110"></canvas>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--actual)"></span>Daily mean external temp</span>
+      <span><span class="swatch" style="background:var(--threshold)"></span>T<sub>max</sub> threshold</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Data: Open-Meteo · Method: CIBSE TM52 / EN16798 adaptive comfort, α = 0.8 · Updated daily
+</footer>
+
+<script>
+  // Add an entry here for every location you add to config.py / data/*.json
+  const LOCATIONS = [
+    { key: "heathrow", name: "London Heathrow", file: "data/heathrow.json" },
+  ];
+
+  let chart;
+
+  async function loadLocation(loc) {
+    const res = await fetch(loc.file + "?t=" + Date.now()); // cache-bust
+    if (!res.ok) {
+      document.getElementById("tmaxValue").innerHTML = "–";
+      document.querySelector("main").insertAdjacentHTML(
+        "afterbegin",
+        `<p class="empty">No data yet for ${loc.name}. Run seed_location.py, then daily_update.py.</p>`
+      );
+      return;
+    }
+    const history = await res.json();
+    render(history);
+  }
+
+  function render(history) {
+    const latest = history[history.length - 1];
+
+    document.getElementById("tmaxValue").innerHTML = `${latest.tmax_c.toFixed(1)}<span class="unit">°C</span>`;
+    document.getElementById("trmValue").innerHTML = `${latest.trm_c.toFixed(1)}<span class="unit">°C</span>`;
+    document.getElementById("trmDate").textContent = `As of ${latest.date}`;
+    document.getElementById("actualValue").innerHTML = `${latest.mean_temp_c.toFixed(1)}<span class="unit">°C</span>`;
+
+    const pill = document.getElementById("statusPill");
+    if (latest.mean_temp_c > latest.tmax_c) {
+      pill.textContent = "Above threshold";
+      pill.classList.add("exceeded");
+    } else {
+      pill.textContent = "Within threshold";
+      pill.classList.remove("exceeded");
+    }
+
+    const labels = history.map(r => r.date);
+    const actual = history.map(r => r.mean_temp_c);
+    const tmax = history.map(r => r.tmax_c);
+
+    if (chart) chart.destroy();
+    const ctx = document.getElementById("trendChart").getContext("2d");
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Mean ext. temp",
+            data: actual,
+            borderColor: "#5FB4E5",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+          },
+          {
+            label: "Tmax threshold",
+            data: tmax,
+            borderColor: "#F2A65A",
+            backgroundColor: "transparent",
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+            borderDash: [4, 3],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: "#7C8FA6", maxTicksLimit: 8 }, grid: { color: "#1F2C3E" } },
+          y: { ticks: { color: "#7C8FA6" }, grid: { color: "#1F2C3E" } },
+        },
+      },
+    });
+  }
+
+  function buildTabs() {
+    const container = document.getElementById("locationTabs");
+    LOCATIONS.forEach((loc, i) => {
+      const btn = document.createElement("button");
+      btn.className = "location-tab" + (i === 0 ? " active" : "");
+      btn.textContent = loc.name;
+      btn.onclick = () => {
+        document.querySelectorAll(".location-tab").forEach(t => t.classList.remove("active"));
+        btn.classList.add("active");
+        loadLocation(loc);
+      };
+      container.appendChild(btn);
+    });
+  }
+
+  buildTabs();
+  loadLocation(LOCATIONS[0]);
+</script>
+
+</body>
+</html>
