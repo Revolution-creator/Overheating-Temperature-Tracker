@@ -2,127 +2,127 @@
   {
     "date": "2026-01-01",
     "mean_temp_c": 2.8,
-    "trm_c": 2.54,
-    "tmax_c": 22.64
+    "trm_c": 3.02,
+    "tmax_c": 22.8
   },
   {
     "date": "2026-01-02",
     "mean_temp_c": 1.6,
-    "trm_c": 2.59,
-    "tmax_c": 22.65
+    "trm_c": 2.98,
+    "tmax_c": 22.78
   },
   {
     "date": "2026-01-03",
     "mean_temp_c": 0.2,
-    "trm_c": 2.39,
-    "tmax_c": 22.59
+    "trm_c": 2.7,
+    "tmax_c": 22.69
   },
   {
     "date": "2026-01-04",
     "mean_temp_c": -1.0,
-    "trm_c": 1.95,
-    "tmax_c": 22.44
+    "trm_c": 2.2,
+    "tmax_c": 22.53
   },
   {
     "date": "2026-01-05",
     "mean_temp_c": -1.3,
-    "trm_c": 1.36,
-    "tmax_c": 22.25
+    "trm_c": 1.56,
+    "tmax_c": 22.31
   },
   {
     "date": "2026-01-06",
     "mean_temp_c": -0.8,
-    "trm_c": 0.83,
-    "tmax_c": 22.07
+    "trm_c": 0.99,
+    "tmax_c": 22.13
   },
   {
     "date": "2026-01-07",
     "mean_temp_c": 2.9,
-    "trm_c": 0.5,
-    "tmax_c": 21.97
+    "trm_c": 0.63,
+    "tmax_c": 22.01
   },
   {
     "date": "2026-01-08",
     "mean_temp_c": 3.3,
-    "trm_c": 0.98,
-    "tmax_c": 22.12
+    "trm_c": 1.08,
+    "tmax_c": 22.16
   },
   {
     "date": "2026-01-09",
     "mean_temp_c": 3.5,
-    "trm_c": 1.45,
-    "tmax_c": 22.28
+    "trm_c": 1.53,
+    "tmax_c": 22.3
   },
   {
     "date": "2026-01-10",
     "mean_temp_c": 1.0,
-    "trm_c": 1.86,
-    "tmax_c": 22.41
+    "trm_c": 1.92,
+    "tmax_c": 22.43
   },
   {
     "date": "2026-01-11",
     "mean_temp_c": 4.0,
-    "trm_c": 1.69,
-    "tmax_c": 22.36
+    "trm_c": 1.74,
+    "tmax_c": 22.37
   },
   {
     "date": "2026-01-12",
     "mean_temp_c": 9.8,
-    "trm_c": 2.15,
-    "tmax_c": 22.51
+    "trm_c": 2.19,
+    "tmax_c": 22.52
   },
   {
     "date": "2026-01-13",
     "mean_temp_c": 9.0,
-    "trm_c": 3.68,
-    "tmax_c": 23.01
+    "trm_c": 3.71,
+    "tmax_c": 23.02
   },
   {
     "date": "2026-01-14",
     "mean_temp_c": 3.7,
-    "trm_c": 4.74,
+    "trm_c": 4.77,
     "tmax_c": 23.37
   },
   {
     "date": "2026-01-15",
     "mean_temp_c": 8.0,
-    "trm_c": 4.53,
+    "trm_c": 4.56,
     "tmax_c": 23.3
   },
   {
     "date": "2026-01-16",
     "mean_temp_c": 6.0,
-    "trm_c": 5.23,
+    "trm_c": 5.24,
     "tmax_c": 23.53
   },
   {
     "date": "2026-01-17",
     "mean_temp_c": 6.9,
-    "trm_c": 5.38,
+    "trm_c": 5.4,
     "tmax_c": 23.58
   },
   {
     "date": "2026-01-18",
     "mean_temp_c": 8.1,
-    "trm_c": 5.69,
+    "trm_c": 5.7,
     "tmax_c": 23.68
   },
   {
     "date": "2026-01-19",
     "mean_temp_c": 8.1,
-    "trm_c": 6.17,
+    "trm_c": 6.18,
     "tmax_c": 23.84
   },
   {
     "date": "2026-01-20",
     "mean_temp_c": 8.5,
-    "trm_c": 6.55,
-    "tmax_c": 23.96
+    "trm_c": 6.56,
+    "tmax_c": 23.97
   },
   {
     "date": "2026-01-21",
     "mean_temp_c": 7.8,
-    "trm_c": 6.94,
+    "trm_c": 6.95,
     "tmax_c": 24.09
   },
   {
@@ -134,7 +134,7 @@
   {
     "date": "2026-01-23",
     "mean_temp_c": 6.9,
-    "trm_c": 7.41,
+    "trm_c": 7.42,
     "tmax_c": 24.25
   },
   {
@@ -152,8 +152,8 @@
   {
     "date": "2026-01-26",
     "mean_temp_c": 5.3,
-    "trm_c": 7.07,
-    "tmax_c": 24.13
+    "trm_c": 7.08,
+    "tmax_c": 24.14
   },
   {
     "date": "2026-01-27",
@@ -182,7 +182,7 @@
   {
     "date": "2026-01-31",
     "mean_temp_c": 6.9,
-    "trm_c": 6.12,
+    "trm_c": 6.13,
     "tmax_c": 23.82
   },
   {
@@ -1396,11 +1396,5 @@
     "mean_temp_c": 16.4,
     "trm_c": 21.38,
     "tmax_c": 28.85
-  },
-  {
-    "date": "2026-08-22",
-    "mean_temp_c": 17.3,
-    "trm_c": 20.38,
-    "tmax_c": 28.53
   }
 ]

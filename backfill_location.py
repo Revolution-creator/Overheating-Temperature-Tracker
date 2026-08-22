@@ -28,8 +28,6 @@ def backfill(location_key: str, start_date_str: str):
     if start_date >= end_date:
         raise SystemExit("start_date must be before yesterday.")
 
-    # Fetch everything needed in one go: 7 days before start_date (to seed Trm)
-    # through end_date (so every day, including the last, has its own actual temp).
     fetch_start = start_date - timedelta(days=8)
     fetch_end = end_date
 
@@ -39,7 +37,10 @@ def backfill(location_key: str, start_date_str: str):
         fetch_start.isoformat(), fetch_end.isoformat()
     )
 
-    # Seed Trm using the 7 days immediately before start_date.
+    # Seed using the 7 days immediately before start_date. This seed value
+    # IS Trm for start_date itself (it already incorporates start_date-1
+    # through start_date-7) - it must NOT be run through another recursive
+    # step before being used as start_date's own Trm.
     seed_dates = sorted(
         (d for d in temps_by_date if date.fromisoformat(d) < start_date),
         reverse=True
@@ -48,12 +49,10 @@ def backfill(location_key: str, start_date_str: str):
         raise SystemExit(f"Couldn't get 7 seed days before {start_date} - try an earlier start date.")
 
     seven_days_temps = [temps_by_date[d] for d in seed_dates]
-    trm = seed_running_mean_temp(seven_days_temps, ALPHA)
+    trm = seed_running_mean_temp(seven_days_temps, ALPHA)   # = Trm(start_date)
 
-    # Walk forward day by day from start_date to end_date, building the full history.
     records = []
     current = start_date
-    previous_day_temp = temps_by_date[(start_date - timedelta(days=1)).isoformat()]
 
     while current <= end_date:
         current_str = current.isoformat()
@@ -61,7 +60,12 @@ def backfill(location_key: str, start_date_str: str):
             print(f"[warning] missing data for {current_str}, stopping backfill there.")
             break
 
-        trm = next_running_mean_temp(trm, previous_day_temp, ALPHA)
+        if current != start_date:
+            # Advance Trm one day using the PREVIOUS day's actual temp,
+            # exactly as daily_update.py does going forward.
+            previous_day_str = (current - timedelta(days=1)).isoformat()
+            trm = next_running_mean_temp(trm, temps_by_date[previous_day_str], ALPHA)
+
         tmax = upper_threshold_temp(trm, DELTA_T)
 
         records.append({
@@ -71,7 +75,6 @@ def backfill(location_key: str, start_date_str: str):
             "tmax_c": round(tmax, 2),
         })
 
-        previous_day_temp = temps_by_date[current_str]
         current += timedelta(days=1)
 
     os.makedirs(DATA_DIR, exist_ok=True)
