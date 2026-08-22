@@ -111,20 +111,6 @@
     font-size:13px;
     color:var(--muted);
   }
-  .status-pill{
-    display:inline-block;
-    margin-top:10px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    padding:4px 10px;
-    border-radius:99px;
-    background:rgba(74,222,128,0.12);
-    color:var(--ok);
-  }
-  .status-pill.exceeded{
-    background:rgba(229,83,61,0.14);
-    color:var(--danger);
-  }
   .chart-panel{
     background:var(--panel);
     border:1px solid var(--border);
@@ -190,7 +176,6 @@
     <div class="card">
       <div class="label">Yesterday's mean ext. temp</div>
       <div class="value" id="actualValue">–<span class="unit">°C</span></div>
-      <div class="status-pill" id="statusPill">–</div>
     </div>
   </div>
 
@@ -248,15 +233,6 @@
     document.getElementById("trmValue").innerHTML = `${latest.trm_c.toFixed(1)}<span class="unit">°C</span>`;
     document.getElementById("trmDate").textContent = `As of ${latest.date}`;
     document.getElementById("actualValue").innerHTML = `${latest.mean_temp_c.toFixed(1)}<span class="unit">°C</span>`;
-
-    const pill = document.getElementById("statusPill");
-    if (latest.mean_temp_c > latest.tmax_c) {
-      pill.textContent = "Above threshold";
-      pill.classList.add("exceeded");
-    } else {
-      pill.textContent = "Within threshold";
-      pill.classList.remove("exceeded");
-    }
   }
 
   function renderCombined(dailyHistory, hourly) {
