@@ -1,8 +1,10 @@
 """
 Runs once a day (via GitHub Actions). For every location in config.py:
   1. reads that location's history file
-  2. fetches yesterday's actual mean external air temperature
-  3. updates Trm and Tmax using the TM52 formulas
+  2. works out Trm for the next day using ONLY the previous record
+     (this is the correct TM52 convention - today's threshold doesn't
+     depend on today's own weather, only on prior days)
+  3. fetches that new day's actual mean temperature, for display/comparison
   4. appends the new day's record and saves
 
 If a location has no history file yet, it's skipped with a warning -
@@ -30,26 +32,27 @@ def update_location(location_key: str, location: dict):
 
     last_record = history[-1]
     last_date = date.fromisoformat(last_record["date"])
-    yesterday = date.today() - timedelta(days=1)
+    new_date = last_date + timedelta(days=1)
 
-    if last_date >= yesterday:
+    if new_date > date.today():
         print(f"[skip] {location_key}: already up to date (last record {last_date}).")
         return
 
-    temps_by_date = get_recent_daily_mean_temps(location["lat"], location["lon"], TIMEZONE)
-    yesterday_str = yesterday.isoformat()
-
-    if yesterday_str not in temps_by_date:
-        print(f"[skip] {location_key}: weather data for {yesterday_str} not available yet, try again later.")
-        return
-
-    yesterday_mean_temp = temps_by_date[yesterday_str]
-    new_trm = next_running_mean_temp(last_record["trm_c"], yesterday_mean_temp, ALPHA)
+    # Trm for new_date only needs the previous record - no fetch required for this part.
+    new_trm = next_running_mean_temp(last_record["trm_c"], last_record["mean_temp_c"], ALPHA)
     new_tmax = upper_threshold_temp(new_trm, DELTA_T)
 
+    # Fetch new_date's own actual mean temperature, purely for display/comparison.
+    temps_by_date = get_recent_daily_mean_temps(location["lat"], location["lon"], TIMEZONE)
+    new_date_str = new_date.isoformat()
+
+    if new_date_str not in temps_by_date:
+        print(f"[skip] {location_key}: weather data for {new_date_str} not available yet, try again later.")
+        return
+
     record = {
-        "date": yesterday_str,
-        "mean_temp_c": round(yesterday_mean_temp, 2),
+        "date": new_date_str,
+        "mean_temp_c": round(temps_by_date[new_date_str], 2),
         "trm_c": round(new_trm, 2),
         "tmax_c": round(new_tmax, 2),
     }
