@@ -19,12 +19,21 @@ LOCATIONS = {
         "lat": 51.4700,
         "lon": -0.4543,
     },
-    # Example of how you'll add more later:
-    # "manchester": {
-    #     "name": "Manchester Airport",
-    #     "lat": 53.3650,
-    #     "lon": -2.2728,
-    # },
+    "birmingham": {
+        "name": "Birmingham",
+        "lat": 52.4862,
+        "lon": -1.8904,
+    },
+    "nottingham": {
+        "name": "Nottingham",
+        "lat": 52.9548,
+        "lon": -1.1581,
+    },
+    "newcastle": {
+        "name": "Newcastle",
+        "lat": 54.9783,
+        "lon": -1.6178,
+    },
 }
 
 DATA_DIR = "data"

@@ -54,18 +54,18 @@
     display:flex;
     gap:6px;
   }
-  .location-tab{
+  .location-select{
     font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
-    padding:7px 14px;
-    border-radius:5px;
+    font-size:13px;
+    padding:8px 14px;
+    border-radius:6px;
     border:1px solid var(--border);
     background:var(--panel);
-    color:var(--muted);
+    color:var(--text);
     cursor:pointer;
   }
-  .location-tab.active{
-    color:var(--text);
+  .location-select:focus{
+    outline:none;
     border-color:var(--actual);
   }
   main{
@@ -158,7 +158,9 @@
     <p class="eyebrow">CIBSE TM52 · Adaptive comfort</p>
     <h1>Overheating threshold tracker</h1>
   </div>
-  <div class="locations" id="locationTabs"></div>
+  <div class="locations">
+    <select id="locationSelect" class="location-select"></select>
+  </div>
 </header>
 
 <main>
@@ -198,17 +200,23 @@
   // Add an entry here for every location you add to config.py / data/*.json
   const LOCATIONS = [
     { key: "heathrow", name: "London Heathrow", file: "data/heathrow.json", hourlyFile: "data/heathrow_hourly.json" },
+    { key: "birmingham", name: "Birmingham", file: "data/birmingham.json", hourlyFile: "data/birmingham_hourly.json" },
+    { key: "nottingham", name: "Nottingham", file: "data/nottingham.json", hourlyFile: "data/nottingham_hourly.json" },
+    { key: "newcastle", name: "Newcastle", file: "data/newcastle.json", hourlyFile: "data/newcastle_hourly.json" },
   ];
 
   let combinedChart;
 
   async function loadLocation(loc) {
+    const existingNotice = document.querySelector(".empty");
+    if (existingNotice) existingNotice.remove();
+
     const res = await fetch(loc.file + "?t=" + Date.now()); // cache-bust
     if (!res.ok) {
       document.getElementById("tmaxValue").innerHTML = "–";
       document.querySelector("main").insertAdjacentHTML(
         "afterbegin",
-        `<p class="empty">No data yet for ${loc.name}. Run seed_location.py, then daily_update.py.</p>`
+        `<p class="empty">No data yet for ${loc.name}. Run backfill_location.py for it first.</p>`
       );
       return;
     }
@@ -316,22 +324,21 @@
     });
   }
 
-  function buildTabs() {
-    const container = document.getElementById("locationTabs");
-    LOCATIONS.forEach((loc, i) => {
-      const btn = document.createElement("button");
-      btn.className = "location-tab" + (i === 0 ? " active" : "");
-      btn.textContent = loc.name;
-      btn.onclick = () => {
-        document.querySelectorAll(".location-tab").forEach(t => t.classList.remove("active"));
-        btn.classList.add("active");
-        loadLocation(loc);
-      };
-      container.appendChild(btn);
+  function buildLocationSelect() {
+    const select = document.getElementById("locationSelect");
+    LOCATIONS.forEach(loc => {
+      const option = document.createElement("option");
+      option.value = loc.key;
+      option.textContent = loc.name;
+      select.appendChild(option);
+    });
+    select.addEventListener("change", () => {
+      const chosen = LOCATIONS.find(l => l.key === select.value);
+      loadLocation(chosen);
     });
   }
 
-  buildTabs();
+  buildLocationSelect();
   loadLocation(LOCATIONS[0]);
 </script>
 
